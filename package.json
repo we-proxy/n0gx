@@ -1,0 +1,15 @@
+{
+  "name": "n0gx",
+  "version": "0.0.1",
+  "description": "No Nginx, Node Only",
+  "repository": "git@github.com:fritx/n0gx.git",
+  "main": "index.js",
+  "bin": {
+    "n0gx": "bin/n0gx.cli.js"
+  },
+  "dependencies": {
+    "express": "^4.10.6",
+    "http-proxy": "^1.8.1"
+  },
+  "license": "MIT"
+}
