@@ -9,5 +9,5 @@ var conf = require(path.resolve(cwd, filepath))
 
 var server = n0gx(conf, function(e){
   if (e) throw e
-  console.log('started on %d', server.address().port)
+  console.log('started on', server.address().port)
 })

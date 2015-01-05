@@ -7,14 +7,14 @@
 - Static
 - Dispatch
 - Redirect
-- Redirect-way 404
+- Redirect-way 404/500
 
 ## Todo
 
--[] Test
--[] Log
--[] Dispatch-way 404
--[] More from nginx...
+- [ ] Test
+- [ ] Log
+- [ ] Dispatch-way 404/500
+- [ ] More from nginx...
 
 ## Usage
 
@@ -42,6 +42,7 @@ $ n0gx path/to/my/n0gx.conf  ## .json or .js
   },
 
   "404": "/blog",
+  "500": "/blog",
 
   "listen": 8111
 }

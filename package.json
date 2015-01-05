@@ -1,6 +1,6 @@
 {
   "name": "n0gx",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "No Nginx, Node Only",
   "repository": "git@github.com:fritx/n0gx.git",
   "main": "index.js",
