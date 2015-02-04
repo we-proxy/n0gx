@@ -28,7 +28,7 @@ module.exports = function n0gx(conf){
         } else next(err)
       })
     }
-    app.use(key, handler)
+    app.use(key, createSlasher(key), handler)
   })
 
   return app
@@ -56,6 +56,24 @@ function createHandler(type, target){
   if (type === 'sendfile') {
     return function(req, res){
       res.sendFile(target, { root: process.cwd() })
+    }
+  }
+}
+
+function createSlasher(key){
+  return function(req, res, next){
+    var pathname = req._parsedUrl.pathname
+    var search = req._parsedUrl.search || ''
+    if (pathname === '/') return next()
+    if (key === '/') return next()
+    if (key.slice(-1) === '/') {
+      if (pathname === key.slice(0, -1)) {
+        res.redirect(key + search)
+      } else next()
+    } else {
+      if (pathname === key + '/') {
+        res.redirect('..' + key + search)
+      } else next()
     }
   }
 }

@@ -9,6 +9,7 @@
 - Redirect
 - Sendfile
 - 404/4xx/5xx
+- Slash Safe
 
 ## Todo
 
