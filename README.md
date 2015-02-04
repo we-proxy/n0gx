@@ -5,15 +5,15 @@
 ## Features
 
 - Static
-- Dispatch
+- Proxy
 - Redirect
-- Redirect-way 404/500
+- 404/4xx/5xx
 
 ## Todo
 
 - [ ] Test
 - [ ] Log
-- [ ] Dispatch-way 404/500
+- [ ] Hostname
 - [ ] More from nginx...
 
 ## Usage
@@ -22,28 +22,26 @@ Boot from any conf file under shell:
 
 ```
 $ npm i -g n0gx  ## install
-$ n0gx path/to/my/n0gx.conf  ## .json or .js
+$ n0gx n0gx-conf 8111  ## json/js file, port
 ```
 
 ```js
-// example/n0gx.conf.json
+// example/n0gx-conf.js
 {
-  "static": {
-    "/static": "./example/static"
-  },
+  '/': ['static', './example/static'],
+  '/wxtopic/': ['proxy', 'http://localhost:9113'],
+  '/blog/': ['proxy', 'http://localhost:8080/blog'],
+  '/blog_online/': ['redirect', 'http://fritx.me/blog'],
 
-  "dispatch": {
-    "/voice1min": "http://fritx.me/voice1min",
-    "/blog_local": "http://127.0.0.1:8080/blog"
-  },
-
-  "redirect": {
-    "/blog": "http://fritx.me/blog"
-  },
-
-  "404": "/blog",
-  "500": "/blog",
-
-  "listen": 8111
+  '*': ['redirect', '/'],
+  '4xx': ['redirect', '/'],
+  '5xx': ['redirect', '/']
 }
+```
+
+```js
+// or as a node module
+var n0gx = require('n0gx')
+var app = n0gx(conf)
+app.listen(8111, function(e){/**/})
 ```

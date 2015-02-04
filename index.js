@@ -1,59 +1,51 @@
 var httpProxy = require('http-proxy')
 var express = require('express')
+var $url = require('url')
+var proxy = httpProxy.createProxyServer({})
+proxy.on('error', function(e){
+  console.error('proxy error', e)
+})
 
-module.exports = function n0gx(conf, cb){
+module.exports = function n0gx(conf){
   var app = express()
-  var proxy = httpProxy.createProxyServer({})
-  proxy.on('error', function(e){
-    console.error('proxy error', e)
+
+  Object.keys(conf).forEach(function(key){
+    var type = conf[key][0]
+    var target = conf[key][1]
+    var handler = createHandler(type, target)
+
+    if (key === '4xx') {
+      return app.use('/', function(err, req, res, next){
+        if (err.status && err.status < 500) {
+          handler(req, res, next)
+        } else next(err)
+      })
+    }
+    if (key === '5xx') {
+      return app.use('/', function(err, req, res, next){
+        if (!err.status || err.status >= 500) {
+          handler(req, res, next)
+        } else next(err)
+      })
+    }
+    app.use(key, handler)
   })
 
-  if (conf['static']) {
-    Object.keys(conf['static']).forEach(function(key){
-      app.get(key, fixGetPrefix(key))
-      app.use(key, express.static(conf['static'][key]))
-    })
-  }
-
-  if (conf['dispatch']) {
-    Object.keys(conf['dispatch']).forEach(function(key){
-      app.get(key, fixGetPrefix(key))
-      app.use(key, function(req, res){
-        proxy.web(req, res, { target: conf['dispatch'][key] })
-      })
-    })
-  }
-
-  if (conf['redirect']) {
-    Object.keys(conf['redirect']).forEach(function(key){
-      app.use(key, function(req, res){
-        res.redirect(conf['redirect'][key])
-      })
-    })
-  }
-
-  if (conf['404']) {
-    app.get('*', function(req, res){
-      res.redirect(conf['404'])
-    })
-  }
-
-  if (conf['500']) {
-    app.use(function(err, req, res, next){
-      res.redirect(conf['500'])
-    })
-  }
-
-  return app.listen(conf['listen'], cb)
+  return app
 }
 
-
-function fixGetPrefix(prefix){
-  var _prefix = prefix.replace(/\/$/, '')
-  return function(req, res, next){
-    if (req._parsedUrl.pathname === _prefix) {
-      return res.redirect(_prefix + '/')
+function createHandler(type, target){
+  if (type === 'static') {
+    return express.static(target)
+  }
+  if (type === 'proxy') {
+    return function(req, res){
+      proxy.web(req, res, { target: target })
     }
-    next()
+  }
+  if (type === 'redirect') {
+    return function(req, res){
+      res.redirect($url.resolve(req.url, target))
+    }
   }
 }
