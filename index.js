@@ -40,6 +40,11 @@ function createHandler(type, target){
   }
   if (type === 'proxy') {
     return function(req, res){
+      if (req.headers['x-forwarded-for']) {
+        req.headers['x-forwarded-for'] += ', ' + req.ip
+      } else {
+        req.headers['x-forwarded-for'] = req.ip
+      }
       proxy.web(req, res, { target: target })
     }
   }
