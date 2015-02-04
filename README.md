@@ -7,6 +7,7 @@
 - Static
 - Proxy
 - Redirect
+- Sendfile
 - 404/4xx/5xx
 
 ## Todo
@@ -27,15 +28,15 @@ $ n0gx n0gx-conf 8111  ## json/js file, port
 
 ```js
 // example/n0gx-conf.js
-{
+module.exports = {
   '/': ['static', './example/static'],
   '/wxtopic/': ['proxy', 'http://localhost:9113'],
   '/blog/': ['proxy', 'http://localhost:8080/blog'],
   '/blog_online/': ['redirect', 'http://fritx.me/blog'],
 
-  '*': ['redirect', '/'],
-  '4xx': ['redirect', '/'],
-  '5xx': ['redirect', '/']
+  '*': ['sendfile', './example/static/404.html'],
+  '4xx': ['sendfile', './example/static/4xx.html'],
+  '5xx': ['sendfile', './example/static/5xx.html']
 }
 ```
 

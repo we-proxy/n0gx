@@ -48,4 +48,9 @@ function createHandler(type, target){
       res.redirect($url.resolve(req.url, target))
     }
   }
+  if (type === 'sendfile') {
+    return function(req, res){
+      res.sendFile(target, { root: process.cwd() })
+    }
+  }
 }
