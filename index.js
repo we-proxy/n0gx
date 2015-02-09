@@ -10,26 +10,50 @@ proxy.on('error', function(e){
 module.exports = function n0gx(conf){
   var app = express()
 
+  var list = []
   _.each(conf, function(val, key){
-    var type = val[0]
-    var target = val[1]
+    if (_.isArray(val)) {
+      list.push([key].concat(val))
+    } else {
+      _.each(val, function(v, k){
+        list.push([k].concat(v).concat(key))
+      })
+    }
+  })
+
+  _.each(list, function(val){
+    var key = val[0]
+    var type = val[1]
+    var target = val[2]
+    var hostn = val[3]
     var handler = createHandler(type, target)
 
     if (key === '4xx') {
-      return app.use('/', function(err, req, res, next){
+      return app.use(function(err, req, res, next){
+        if (hostn && req.hostname !== hostn) {
+          return next(err)
+        }
         if (err.status && err.status < 500) {
           handler(req, res, next)
         } else next(err)
       })
     }
     if (key === '5xx') {
-      return app.use('/', function(err, req, res, next){
+      return app.use(function(err, req, res, next){
+        if (hostn && req.hostname !== hostn) {
+          return next(err)
+        }
         if (!err.status || err.status >= 500) {
           handler(req, res, next)
         } else next(err)
       })
     }
-    app.use(key, createSlasher(key), handler)
+    app.use(key, createSlasher(key), function(req, res, next){
+      if (hostn && req.hostname !== hostn) {
+        return next()
+      }
+      handler(req, res, next)
+    })
   })
 
   return app
