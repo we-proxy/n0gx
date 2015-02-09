@@ -1,5 +1,6 @@
 var httpProxy = require('http-proxy')
 var express = require('express')
+var _ = require('lodash')
 var $url = require('url')
 var proxy = httpProxy.createProxyServer({})
 proxy.on('error', function(e){
@@ -9,9 +10,9 @@ proxy.on('error', function(e){
 module.exports = function n0gx(conf){
   var app = express()
 
-  Object.keys(conf).forEach(function(key){
-    var type = conf[key][0]
-    var target = conf[key][1]
+  _.each(conf, function(val, key){
+    var type = val[0]
+    var target = val[1]
     var handler = createHandler(type, target)
 
     if (key === '4xx') {
@@ -40,11 +41,7 @@ function createHandler(type, target){
   }
   if (type === 'proxy') {
     return function(req, res){
-      if (req.headers['x-forwarded-for']) {
-        req.headers['x-forwarded-for'] += ', ' + req.ip
-      } else {
-        req.headers['x-forwarded-for'] = req.ip
-      }
+      forwardReq(req)
       proxy.web(req, res, { target: target })
     }
   }
@@ -76,4 +73,19 @@ function createSlasher(key){
       } else next()
     }
   }
+}
+
+function forwardReq(req){
+  lowerKeys(req.headers)
+  if (req.headers['x-forwarded-for']) {
+    req.headers['x-forwarded-for'] += ', ' + req.ip
+  } else {
+    req.headers['x-forwarded-for'] = req.ip
+  }
+}
+function lowerKeys(obj){
+  _.each(obj, function(val, key, list){
+    delete list[key]
+    list[key.toLowerCase()] = val
+  })
 }
