@@ -47,7 +47,8 @@ function createHandler(type, target){
   }
   if (type === 'redirect') {
     return function(req, res){
-      res.redirect($url.resolve(req.url, target))
+      var base = req._parsedUrl.pathname
+      res.redirect($url.resolve(base, target))
     }
   }
   if (type === 'sendfile') {
