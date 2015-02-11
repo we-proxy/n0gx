@@ -7,6 +7,6 @@ module.exports = {
   },
 
   '*': ['sendfile', './example/static/404.html'],
-  '4xx': ['sendfile', './example/static/4xx.html'],
-  '5xx': ['sendfile', './example/static/5xx.html']
+  '4xx': ['status', 400],
+  '5xx': ['status', 500]
 }

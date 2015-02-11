@@ -80,6 +80,11 @@ function createHandler(type, target){
       res.sendFile(target, { root: process.cwd() })
     }
   }
+  if (type === 'status') {
+    return function(req, res){
+      res.status(target).end()
+    }
+  }
 }
 
 function createSlasher(key){
