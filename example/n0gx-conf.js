@@ -2,7 +2,7 @@ module.exports = {
   'localhost': {
     '/wxtopic/': ['proxy', 'http://localhost:9113'],
     '/blog/': ['proxy', 'http://localhost:8080/blog'],
-    '/blog_online/': ['redirect', 'http://fritx.me/blog'],
+    '/blog_online/': ['concat', 'http://fritx.me/blog'],
     '/': ['static', './example/static']
   },
 

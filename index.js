@@ -71,8 +71,18 @@ function createHandler(type, target){
   }
   if (type === 'redirect') {
     return function(req, res){
-      var base = req._parsedUrl.pathname
-      res.redirect($url.resolve(base, target))
+      xRedirect(req, res, target)
+    }
+  }
+  if (type === 'concat') {
+    return function(req, res){
+      var pathname = req._parsedUrl.pathname
+      pathname = pathname.replace(req.baseUrl, '')
+      pathname = pathname.replace(/^\//, '')
+      var _target = target
+      if (_target.slice(-1) !== '/') _target += '/'
+      _target = $url.resolve(_target, pathname)
+      xRedirect(req, res, _target)
     }
   }
   if (type === 'sendfile') {
@@ -90,19 +100,23 @@ function createHandler(type, target){
 function createSlasher(key){
   return function(req, res, next){
     var pathname = req._parsedUrl.pathname
-    var search = req._parsedUrl.search || ''
     if (pathname === '/') return next()
     if (key === '/') return next()
     if (key.slice(-1) === '/') {
       if (pathname === key.slice(0, -1)) {
-        res.redirect(key + search)
+        xRedirect(req, res, key)
       } else next()
     } else {
       if (pathname === key + '/') {
-        res.redirect('..' + key + search)
+        xRedirect(req, res, '..' + key)
       } else next()
     }
   }
+}
+
+function xRedirect(req, res, target){
+  var search = req._parsedUrl.search || ''
+  res.redirect(target + search)
 }
 
 function forwardReq(req){
