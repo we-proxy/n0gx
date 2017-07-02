@@ -61,7 +61,7 @@ module.exports = function n0gx(conf){
 
 function createHandler(type, target){
   if (type === 'static') {
-    return express.static(target)
+    return express.static(target, { dotfiles: 'ignore' })
   }
   if (type === 'proxy') {
     return function(req, res){
