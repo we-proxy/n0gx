@@ -17,7 +17,7 @@ var httpsApp = n0gx(conf)
 
 httpApp.get('*', function (req, res) {
   var httpsUrl = `https://${req.get('host')}${req.url}`
-  res.redirect(301, httpsUrl)
+  res.redirect(302, httpsUrl)
 })
 
 var fs = require('fs')
@@ -34,8 +34,8 @@ var key  = fs.readFileSync(keyfile, 'utf8')
 var cert = fs.readFileSync(certfile, 'utf8')
 var credentials = { key, cert }
 
-//var httpServer = http.createServer(httpApp)
-var httpServer = http.createServer(httpsApp)
+var httpServer = http.createServer(httpApp)
+//var httpServer = http.createServer(httpsApp)
 var httpsServer = https.createServer(credentials, httpsApp)
 
 httpServer.listen(httpPort, function (e) {
