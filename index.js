@@ -7,7 +7,7 @@ proxy.on('error', function(e){
   console.error('proxy error', e)
 })
 
-module.exports = function n0gx(conf){
+module.exports = function n0gx(conf, isHttps = false){
   var app = express()
 
   var list = []
@@ -26,7 +26,7 @@ module.exports = function n0gx(conf){
     var type = val[1]
     var target = val[2]
     var hostn = val[3]
-    var handler = createHandler(type, target)
+    var handler = createHandler(type, target, isHttps)
 
     if (key === '4xx') {
       return app.use(function(err, req, res, next){
@@ -59,13 +59,13 @@ module.exports = function n0gx(conf){
   return app
 }
 
-function createHandler(type, target){
+function createHandler(type, target, isHttps){
   if (type === 'static') {
     return express.static(target, { dotfiles: 'ignore' })
   }
   if (type === 'proxy') {
     return function(req, res){
-      forwardReq(req)
+      forwardReq(req, isHttps)
       proxy.web(req, res, { target: target })
     }
   }
@@ -119,12 +119,19 @@ function xRedirect(req, res, target){
   res.redirect(target + search)
 }
 
-function forwardReq(req){
+function forwardReq(req, isHttps){
   lowerKeys(req.headers)
   if (req.headers['x-forwarded-for']) {
     req.headers['x-forwarded-for'] += ', ' + req.ip
   } else {
     req.headers['x-forwarded-for'] = req.ip
+  }
+  let protocol = isHttps ? 'https' : 'http'
+  let fullUrl = `${protocol}://${req.headers['host']}${req.originalUrl}`
+  if (req.headers['x-forwarded-for-href']) {
+    req.headers['x-forwarded-for-href'] += ' ' + fullUrl
+  } else {
+    req.headers['x-forwarded-for-href'] = fullUrl
   }
 }
 function lowerKeys(obj){
