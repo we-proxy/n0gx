@@ -2,7 +2,9 @@ var httpProxy = require('http-proxy')
 var express = require('express')
 var _ = require('lodash')
 var $url = require('url')
-var proxy = httpProxy.createProxyServer({})
+var proxy = httpProxy.createProxyServer({
+  changeOrigin: true
+})
 proxy.on('error', function(e){
   console.error('proxy error', e)
 })
