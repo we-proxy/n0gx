@@ -12,7 +12,7 @@ var cwd = process.cwd()
 var conf = require(path.resolve(cwd, filepath))
 
 var httpApp = n0gx(conf)
-var httpsApp = n0gx(conf)
+var httpsApp = n0gx(conf, true)
 
 //httpApp.get('*', function (req, res) {
 //  var httpsUrl = `https://${req.get('host')}${req.url}`
