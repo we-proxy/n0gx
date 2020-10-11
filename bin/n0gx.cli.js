@@ -11,14 +11,13 @@ if (!httpsPort) throw new Error('httpsPort required')
 var cwd = process.cwd()
 var conf = require(path.resolve(cwd, filepath))
 
-var express = require('express')
-var httpApp = express()
+var httpApp = n0gx(conf)
 var httpsApp = n0gx(conf)
 
-httpApp.get('*', function (req, res) {
-  var httpsUrl = `https://${req.get('host')}${req.url}`
-  res.redirect(302, httpsUrl)
-})
+//httpApp.get('*', function (req, res) {
+//  var httpsUrl = `https://${req.get('host')}${req.url}`
+//  res.redirect(302, httpsUrl)
+//})
 
 var fs = require('fs')
 var http = require('http')
