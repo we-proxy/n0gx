@@ -11,18 +11,24 @@ if (!httpsPort) throw new Error('httpsPort required')
 var cwd = process.cwd()
 var conf = require(path.resolve(cwd, filepath))
 
-var httpApp = n0gx(conf)
 var httpsApp = n0gx(conf, true)
 
-//httpApp.get('*', function (req, res) {
-//  var httpsUrl = `https://${req.get('host')}${req.url}`
-//  res.redirect(302, httpsUrl)
-//})
+// opt.1 no force http to https
+// var httpApp = n0gx(conf)
+
+// opt.2 force http to https
+var express = require('express')
+var httpApp = express()
+httpApp.get('*', function (req, res) {
+  var httpsUrl = `https://${req.get('host')}${req.url}`
+  res.redirect(302, httpsUrl)
+})
 
 var fs = require('fs')
 var http = require('http')
 var https = require('https')
 
+// TODO: read from process.env vars
 var domain = 'fritx.me'
 var basedir = '/root/.acme.sh'
 
@@ -34,7 +40,6 @@ var cert = fs.readFileSync(certfile, 'utf8')
 var credentials = { key, cert }
 
 var httpServer = http.createServer(httpApp)
-//var httpServer = http.createServer(httpsApp)
 var httpsServer = https.createServer(credentials, httpsApp)
 
 httpServer.listen(httpPort, function (e) {
