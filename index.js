@@ -2,6 +2,8 @@ var httpProxy = require('http-proxy')
 var express = require('express')
 var _ = require('lodash')
 var $url = require('url')
+var path = require('path')
+
 var proxy = httpProxy.createProxyServer({
   changeOrigin: true
 })
@@ -68,7 +70,16 @@ function createHandler(type, target, isHttps){
   if (type === 'proxy') {
     return function(req, res){
       forwardReq(req, isHttps)
-      proxy.web(req, res, { target: target })
+
+      // Keeping old syntax as n0gx has been targeting to old versions of Node.js
+      var proxyTarget = target
+      var targetObj = $url.parse(target)
+      if (targetObj.pathname !== '/') {
+        proxyTarget = [targetObj.protocol, '//', targetObj.host].join('')
+        // Mutating req.url directly here
+        req.url = path.posix.join(req.url, targetObj.pathname)
+      }
+      proxy.web(req, res, { target: proxyTarget })
     }
   }
   if (type === 'redirect') {
