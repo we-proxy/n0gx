@@ -11,7 +11,9 @@ if (!httpsPort) throw new Error('httpsPort required')
 var cwd = process.cwd()
 var conf = require(path.resolve(cwd, filepath))
 
-var httpsApp = n0gx(conf, true)
+var ret = n0gx(conf, true)
+var httpsApp = ret.app
+var serverUpgradeHandler = ret.serverUpgradeHandler
 
 // opt.1 no force http to https
 // var httpApp = n0gx(conf)
@@ -41,6 +43,7 @@ var credentials = { key, cert }
 
 var httpServer = http.createServer(httpApp)
 var httpsServer = https.createServer(credentials, httpsApp)
+httpsServer.on('upgrade', serverUpgradeHandler)
 
 httpServer.listen(httpPort, function (e) {
   if (e) throw e
@@ -50,4 +53,3 @@ httpsServer.listen(httpsPort, function (e) {
   if (e) throw e
   console.log('started on', httpsServer.address().port)
 })
-

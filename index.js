@@ -12,6 +12,7 @@ proxy.on('error', function(e){
 })
 
 module.exports = function n0gx(conf, isHttps = false){
+  var upgradeHandlers = []
   var app = express()
 
   var list = []
@@ -52,6 +53,23 @@ module.exports = function n0gx(conf, isHttps = false){
         } else next(err)
       })
     }
+    if (type === 'proxy') {
+      upgradeHandlers.push(function (req, socket, head) {
+        // Note: `req` here is node.js native http.IncomingMessage, not express req
+        if (hostn && req.headers['host'] !== hostn) {
+          return false
+        }
+        // Mutating req.url directly here
+        req.url = req.url.slice(key.length).replace(/^\/*/, '/')
+        // Workaround: http-proxy@1.8.1 seems not doing well with origin+host
+        // Mutating req.headers directly here
+        delete req.headers['host']
+        delete req.headers['origin']
+        var proxyTarget = handleRequestAndGetProxyTarget(req, target)
+        proxy.ws(req, socket, head, { target: proxyTarget })
+        return true
+      })
+    }
     app.use(key, createSlasher(key), function(req, res, next){
       if (hostn && req.hostname !== hostn) {
         return next()
@@ -70,15 +88,7 @@ function createHandler(type, target, isHttps){
   if (type === 'proxy') {
     return function(req, res){
       forwardReq(req, isHttps)
-
-      // Keeping old syntax as n0gx has been targeting to old versions of Node.js
-      var proxyTarget = target
-      var targetObj = $url.parse(target)
-      if (targetObj.pathname !== '/') {
-        proxyTarget = [targetObj.protocol, '//', targetObj.host].join('')
-        // Mutating req.url directly here
-        req.url = path.posix.join(req.url, targetObj.pathname)
-      }
+      var proxyTarget = handleRequestAndGetProxyTarget(req, target)
       proxy.web(req, res, { target: proxyTarget })
     }
   }
@@ -127,6 +137,20 @@ function createSlasher(key){
   }
 }
 
+// Keeping old syntax as n0gx has been targeting to old versions of Node.js
+function handleRequestAndGetProxyTarget(req, target) {
+  // Note: `req` here can be *either* node.js native http.IncomingMessage or express req
+  // console.log('handleRequestAndGetProxyTarget target.url', req.url, 'target', target)
+  var proxyTarget = target
+  var targetObj = $url.parse(target)
+  if (targetObj.pathname !== '/') {
+    proxyTarget = [targetObj.protocol, '//', targetObj.host].join('')
+    // Mutating req.url directly here
+    req.url = path.posix.join(req.url, targetObj.pathname)
+  }
+  return proxyTarget
+}
+
 function xRedirect(req, res, target){
   var search = req._parsedUrl.search || ''
   res.redirect(target + search)
@@ -156,4 +180,3 @@ function lowerKeys(obj){
     list[key.toLowerCase()] = val
   })
 }
-
