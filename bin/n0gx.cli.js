@@ -21,6 +21,8 @@ var serverUpgradeHandler = ret.serverUpgradeHandler
 // opt.2 force http to https
 var express = require('express')
 var httpApp = express()
+// 移除 X-Powered-By 响应头
+httpApp.disable('x-powered-by');
 httpApp.get('*', function (req, res) {
   var httpsUrl = `https://${req.get('host')}${req.url}`
   res.redirect(302, httpsUrl)

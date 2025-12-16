@@ -5,6 +5,10 @@ var $url = require('url')
 var path = require('path')
 
 var proxy = httpProxy.createProxyServer({
+  // Enabling req.on('upgrade') event handling ??
+  // https://github.com/http-party/node-http-proxy/blob/master/examples/http/error-handling.js#L35
+  // ws: true,
+  // autoRewrite: true,
   changeOrigin: true
 })
 proxy.on('error', function(e){
@@ -14,6 +18,17 @@ proxy.on('error', function(e){
 module.exports = function n0gx(conf, isHttps = false){
   var upgradeHandlers = []
   var app = express()
+
+  // 移除 X-Powered-By 响应头
+  app.disable('x-powered-by');
+
+  app.use(function (req, res, next) {
+    // todo: Maybe unnecessary..
+    lowerKeys(req.headers)
+    // Retrieving ips and url before next()
+    console.log('req',  getIps(req), req.url)
+    next()
+  })
 
   var list = []
   _.each(conf, function(val, key){
@@ -66,6 +81,7 @@ module.exports = function n0gx(conf, isHttps = false){
         delete req.headers['host']
         delete req.headers['origin']
         var proxyTarget = handleRequestAndGetProxyTarget(req, target)
+        // console.log('proxy.ws req.url', req.url, 'target', proxyTarget, 'headers', req.headers)
         proxy.ws(req, socket, head, { target: proxyTarget })
         return true
       })
@@ -78,7 +94,15 @@ module.exports = function n0gx(conf, isHttps = false){
     })
   })
 
-  return app
+  var serverUpgradeHandler = function (req, socket, head) {
+    // console.log('server.on upgrade')
+    for (var i = 0; i < upgradeHandlers.length; i++) {
+      if (upgradeHandlers[i](req, socket, head)) {
+        break
+      }
+    }
+  }
+  return { app: app, serverUpgradeHandler: serverUpgradeHandler }
 }
 
 function createHandler(type, target, isHttps){
@@ -90,6 +114,16 @@ function createHandler(type, target, isHttps){
       forwardReq(req, isHttps)
       var proxyTarget = handleRequestAndGetProxyTarget(req, target)
       proxy.web(req, res, { target: proxyTarget })
+
+      // In a websocket request case
+      // https://github.com/http-party/node-http-proxy/blob/master/examples/http/error-handling.js#L51
+      req.on('upgrade', function (req, socket, head) {
+        console.log('req.on upgrade')
+        proxy.ws(req, socket, head, function (err) {
+          if (err) throw err
+          socket.close()
+        })
+      })
     }
   }
   if (type === 'redirect') {
@@ -157,14 +191,11 @@ function xRedirect(req, res, target){
 }
 
 function forwardReq(req, isHttps){
-  lowerKeys(req.headers)
-  if (req.headers['x-forwarded-for']) {
-    req.headers['x-forwarded-for'] += ', ' + req.ip
-  } else {
-    req.headers['x-forwarded-for'] = req.ip
-  }
-  let protocol = isHttps ? 'https' : 'http'
-  let fullUrl = `${protocol}://${req.headers['host']}${req.originalUrl}`
+  // Note: moved to root handler
+  // lowerKeys(req.headers)
+  req.headers['x-forwarded-for'] = getIps(req)
+  var protocol = isHttps ? 'https' : 'http'
+  var fullUrl = `${protocol}://${req.headers['host']}${req.originalUrl}`
   if (req.headers['x-forwarded-for-href']) {
     req.headers['x-forwarded-for-href'] += ' ' + fullUrl
   } else {
@@ -172,6 +203,16 @@ function forwardReq(req, isHttps){
   }
   // host header rewrites
   // req.headers['host'] = req.query['_host'] || ''
+}
+
+function getIps(req) {
+  var ips = req.headers['x-forwarded-for'] || ''
+  if (ips) {
+    ips += ', ' + req.ip
+  } else {
+    ips = req.ip
+  }
+  return ips
 }
 
 function lowerKeys(obj){
