@@ -36,9 +36,12 @@ var https = require('https')
 var domain = 'fritx.me'
 var basedir = '/root/.acme.sh'
 
-var keyfile = `${basedir}/${domain}/${domain}.key`
-// var certfile = `${basedir}/${domain}/${domain}.cer`
-var certfile = `${basedir}/${domain}/fullchain.cer`
+// var ifecc = '_ecc'
+var ifecc = ''
+
+var keyfile = `${basedir}/${domain}${ifecc}/${domain}.key`
+var certfile = `${basedir}/${domain}${ifecc}/fullchain.cer`
+
 var key  = fs.readFileSync(keyfile, 'utf8')
 var cert = fs.readFileSync(certfile, 'utf8')
 var credentials = { key, cert }
